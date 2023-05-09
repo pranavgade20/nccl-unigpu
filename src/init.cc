@@ -453,7 +453,7 @@ static void showVersion() {
 static ncclResult_t fillInfo(struct ncclComm* comm, struct ncclPeerInfo* info, uint64_t commHash) {
   info->rank = comm->rank;
   CUDACHECK(cudaGetDevice(&info->cudaDev));
-  info->hostHash=getHostHash()+commHash;
+  info->hostHash=getHostHash()+getPidHash()+commHash;
   info->pidHash=getPidHash()+commHash;
 
   // Get the device MAJOR:MINOR of /dev/shm so we can use that
@@ -745,9 +745,8 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* p
 
   for (int i = 0; i < nranks; i++) {
     if ((i != rank) && (comm->peerInfo[i].hostHash == comm->peerInfo[rank].hostHash) && (comm->peerInfo[i].busId == comm->peerInfo[rank].busId)) {
-      WARN("Duplicate GPU detected : rank %d and rank %d both on CUDA device %lx", rank, i, comm->peerInfo[rank].busId);
-      ret = ncclInvalidUsage;
-      goto fail;
+      WARN("Duplicate GPU detected : rank %d and rank %d both on CUDA device %lx - resetting host hash", rank, i, comm->peerInfo[rank].busId);
+//        comm->peerInfo[i].hostHash = comm->peerInfo[i].hostHash + i;
     }
   }
   // AllGather1 - end

@@ -817,7 +817,6 @@ NCCL_PARAM(IgnoreCpuAffinity, "IGNORE_CPU_AFFINITY", 0);
 ncclResult_t ncclTopoGetCpuAffinity(struct ncclTopoSystem* system, int rank, cpu_set_t* affinity) {
   struct ncclTopoNode* cpu = NULL, *gpu = NULL;
   for (int g=0; g<system->nodes[GPU].count; g++) {
-    if (system->nodes[GPU].nodes[g].gpu.rank == rank) {
       gpu = system->nodes[GPU].nodes+g;
       // Find closer CPU
       int cpuIndex = -1, minHops = 0;
@@ -829,10 +828,9 @@ ncclResult_t ncclTopoGetCpuAffinity(struct ncclTopoSystem* system, int rank, cpu
         }
       }
       cpu = system->nodes[CPU].nodes+cpuIndex;
-    }
   }
   if (cpu == NULL) {
-    WARN("Set CPU affinity : unable to find GPU/CPU for rank %d", rank);
+    WARN("Set CPU affinity : unable to find GPU/CPU for rank %d, system->nodes[GPU].count = %d, system->nodes[GPU].nodes[g].gpu.rank = %d", rank, system->nodes[GPU].count, system->nodes[GPU].nodes[0].gpu.rank);
     return ncclInternalError;
   }
 
